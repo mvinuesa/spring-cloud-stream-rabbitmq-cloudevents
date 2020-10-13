@@ -1,0 +1,130 @@
+# SPRING
+spring:
+  # Flag to explicitly request a specific type of web application. If not set, auto-detected based on the classpath.
+  main.web-application-type: reactive
+
+  # JACKSON
+  jackson:
+    default-property-inclusion: non-null
+    deserialization:
+      fail-on-unknown-properties: false
+    serialization:
+      indent-output: true
+      fail-on-unwrapped-type-identifiers: false
+
+  # RABBIT
+  rabbitmq:
+    username: guest
+    password: guest
+    addresses: localhost:5672
+
+  cloud:
+    stream:
+      # Default values can be set by using the spring.cloud.stream.default prefix
+      default:
+        content-type: application/json
+
+      # The name of the binder to use by all bindings in the event multiple binders available (e.g., 'rabbit').
+      default-binder: rabbit
+      function:
+        routing.enabled: true
+
+        # [spring.cloud.stream.function.definition]
+        # Definition of functions to bind. If several functions need to be composed into one,
+        # use pipes (e.g., 'fooFunc|barFunc')
+        # If you need for piped definitions use ';' character (e.g., 'fooFunc|barFunc;fooFunc|barFunc2')
+        definition: catEventProcessor|mammalConsumer;dogEventProcessor|mammalConsumer
+
+        # Some times to improve readability you may want to give your binding a more descriptive names (such as 'account',
+        # 'orders` etc). You can do it with spring.cloud.stream.function.bindings.<binding-name> property.
+        # more info in https://docs.spring.io/spring-cloud-stream/docs/3.0.8.RELEASE/reference/html/spring-cloud-stream.html#spring-cloud-stream-reference
+        bindings:
+          catEventProcessor|mammalConsumer-in-0: cat
+          dogEventProcessor|mammalConsumer-in-0: dog
+
+      # [spring.cloud.stream.bindings]
+      # Additional binding properties (see {@link BinderProperties}) per binding name (e.g., 'input`).
+      # For example; This sets the content-type for the 'input' binding of a Sink
+      # application: 'spring.cloud.stream.bindings.input.contentType=text\/plain'
+      bindings:
+        default:
+          content-type: application/json
+          consumer:
+            max-attempts: 3
+            back-off-initial-interval: 1000
+            back-off-max-interval: 10000
+
+        # In this case, the 'transformEvent|processLead-in-0' represents the binding name
+        cat:
+          destination: mammal.tx
+          # define the 'consumer group'
+          group: cat-queue
+        dog:
+          destination: mammal.tx
+          # define the 'consumer group'
+          group: dog-queue
+
+        # Metrics Emitter is activated which specifies the name of the binding
+        # destination used by the current binder to publish metric messages.
+        # applicationMetrics.destination: myMetricDestination
+      rabbit:
+        bindings:
+          cat:
+            consumer:
+              # Not create queue
+              bindQueue: true
+              # Not create exchange
+              declareExchange: true
+              # Only one message by group
+              queueNameGroupOnly: true
+              # Config dead letter queue with https://cloud.spring.io/spring-cloud-stream-binder-rabbit/spring-cloud-stream-binder-rabbit.html#_rabbitmq_consumer_properties
+              #autoBindDlq: true
+          dog:
+              consumer:
+                # Not create queue
+                bindQueue: true
+                # Not create exchange
+                declareExchange: true
+                # Only one message by group
+                queueNameGroupOnly: true
+                # Config dead letter queue with
+                # Dead letter queue info https://cloud.spring.io/spring-cloud-stream-binder-rabbit/spring-cloud-stream-binder-rabbit.html#_rabbitmq_consumer_properties
+                #autoBindDlq: true
+
+  sleuth:
+    traceId128: true
+    sampler.probability: 1.0
+
+# Actuator
+management:
+
+  server.port: 8079
+
+  endpoints.web.exposure.include: '*'
+  health:
+    # Allows to enable/disable binder's' health indicators. If you want to disable health
+    # indicator completely, then set it to `false`.
+    binders.enabled: true
+
+    # Whether to enable JMS health check.
+    jms.enabled: false
+
+  endpoints.web:
+    # https://docs.spring.io/spring-boot/docs/2.2.x/reference/html/production-ready-features.html#production-ready-endpoints-cors
+    cors:
+      allowed-origins: '*'
+      allowed-methods: GET,POST
+
+  endpoint:
+    health.show-details: always
+    # Allows to enable/disable binder's' health indicators. If you want to disable health
+    # indicator completely, then set it to `false`.
+    bindings.enabled: true
+
+# Logging
+logging:
+  level:
+    ROOT: INFO
+    org.springframework.cloud: INFO
+    org.springframework.web: INFO
+    com.mvinesa: INFO

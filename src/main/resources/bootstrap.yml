@@ -1,0 +1,10 @@
+# For standard Spring Boot parameters see:
+# http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+server:
+  compression:
+    enabled: true
+
+spring:
+  # change the application name for your project name, this name is reserved for the maven archetype code generation
+  application:
+    name: spring-cloud-stream-rabbitmq-cloudevents
